@@ -8,8 +8,9 @@ const DEFAULT_USER_AGENT =
 function usage() {
   console.log(`Usage: defuddle.js <url> [defuddle options]
 
-Runs Defuddle with Markdown and frontmatter output, a browser user agent, and
-an old.reddit.com rewrite for Reddit URLs.
+Runs a global Defuddle installation when available, otherwise falls back to
+npx. Adds Markdown and frontmatter output, a browser user agent, and an
+old.reddit.com rewrite for Reddit URLs.
 
 Examples:
   defuddle.js https://example.com/article
@@ -47,7 +48,7 @@ const hasUserAgent = forwardedArgs.some(
   (arg) => arg === '-u' || arg === '--user-agent' || arg.startsWith('--user-agent='),
 );
 const userAgent = process.env.DEFUDDLE_USER_AGENT || DEFAULT_USER_AGENT;
-const defuddleArgs = ['-y', 'defuddle', 'parse', target.toString(), '-mf'];
+const defuddleArgs = ['parse', target.toString(), '-mf'];
 
 if (!hasUserAgent) {
   defuddleArgs.push('-u', userAgent);
@@ -55,11 +56,17 @@ if (!hasUserAgent) {
 
 defuddleArgs.push(...forwardedArgs);
 
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const result = spawnSync(npx, defuddleArgs, { stdio: 'inherit' });
+const globalDefuddle = process.platform === 'win32' ? 'defuddle.cmd' : 'defuddle';
+let command = globalDefuddle;
+let result = spawnSync(command, defuddleArgs, { stdio: 'inherit' });
+
+if (result.error?.code === 'ENOENT') {
+  command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  result = spawnSync(command, ['-y', 'defuddle', ...defuddleArgs], { stdio: 'inherit' });
+}
 
 if (result.error) {
-  console.error(`Failed to run npx: ${result.error.message}`);
+  console.error(`Failed to run ${command}: ${result.error.message}`);
   process.exit(1);
 }
 

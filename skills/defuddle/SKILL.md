@@ -27,8 +27,4 @@ Save to file:
 node scripts/defuddle.js <url> -o content.md
 ```
 
-The wrapper always requests Markdown with frontmatter, supplies a browser user
-agent, and rewrites Reddit URLs to `old.reddit.com`. The rewrite is necessary
-because Defuddle's secondary Reddit request does not honor its CLI user-agent
-option. Pass any additional Defuddle options after the URL. Set
-`DEFUDDLE_USER_AGENT` or pass `-u`/`--user-agent` to override the default.
+Pass additional Defuddle options after the URL.
