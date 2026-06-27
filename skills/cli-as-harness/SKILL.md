@@ -1,6 +1,6 @@
 ---
 name: cli-as-harness
-description: Author CLI surfaces as agent-facing documentation, especially parser-generated `--help` and actionable error messages. Use in any language or CLI parser framework when adding or editing a CLI, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into generated CLI surfaces, or making errors suggest the corrected command line or tool call.
+description: Author CLI surfaces as agent-facing documentation, especially `--help` and actionable error messages. Use with any language or parser design when adding or editing a CLI, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into CLI surfaces, or making errors suggest the corrected command line or tool call.
 ---
 
 # Authoring CLI surfaces as harness
@@ -19,19 +19,13 @@ command use; a skill or AGENTS.md owns cross-tool workflow, policy, and anything
 bigger picture to apply safely.** Most staleness and duplication in agent docs comes from copying
 a flag list into AGENTS.md, where it rots the moment the CLI changes.
 
-## Start from a declarative parser framework
+## Prefer declarative parsers
 
-Everything below depends on a parser that generates `--help` and structured errors from one
-declarative source of truth. A hand-rolled parser — manual `argv`/`sys.argv` walking, ad-hoc
-`if`/`else` flag handling — cannot produce these surfaces: help drifts from behavior, validation
-scatters across the code, and there is nothing for an agent to read. Hand-rolled parsers also grow
-unmanageable as flags and subcommands accumulate.
-
-- **New project:** reach for the ecosystem's standard parser framework from the first flag rather
-  than parsing `argv` by hand.
-- **Existing hand-rolled CLI:** migrating to a parser framework is usually the highest-leverage
-  change available, and a prerequisite for the rest of this skill. Move flags, defaults, choices,
-  and required-ness into declarations so help and errors generate themselves.
+For new CLIs, prefer the ecosystem's standard declarative parser so behavior, help, and parse
+errors share a source of truth. For an existing hand-rolled parser, improve its current surfaces
+in place unless migration is in scope. Consider migration when duplicated definitions or
+scattered validation repeatedly cause drift; do not expand a narrow help or error task solely to
+replace the parser.
 
 ## Authoring `--help`
 
@@ -66,11 +60,9 @@ A flag list is the floor, not the ceiling. The high-value additions for an agent
   subcommands; do not try to replace subcommand help.
   > `Recipe (log then review):  tool add ... ; tool list --due`
 - **Isolated guidance** — advice correct on its own, since each help page must stand without
-  surrounding narrative. Good: "capture the snapshot in the snapshot flags, not --notes"; "a
-  pass/skip is archived, not closed."
-- **Gotchas** — the constraint that produces a confusing error if missed (e.g. an enforced
-  status↔value pairing). Put the rule next to the flag, then make the matching error name the
-  violated constraint and suggest the corrected command line or tool call.
+  surrounding narrative. Good: "`--output FILE` writes to `FILE` instead of stdout."
+- **Gotchas** — constraints that produce confusing errors if missed. Put each rule next to the
+  flag, then name it in the matching error and suggest the correction.
 - **Tool when/why** — the root `tool --help` should say when to reach for the tool at all, and host
   the recipes that span its own subcommands.
 
@@ -85,18 +77,18 @@ Error messages are part of the harness because agents often see them at the exac
 to recover. Keep them short, specific, and corrective:
 
 - State what failed using the same flag, value, and subcommand names shown in `--help`.
-- When the fix is unambiguous, include the exact command line or tool call, already filled in with
-  the offending values, that can be copied and run verbatim to recover.
+- When the fix is unambiguous, include a runnable correction. Render dynamic values safely for the
+  target interface: shell-quote shell values, use `--` before positional filenames when supported,
+  or prefer a structured tool call or argument list.
 - For validation constraints, name the accepted values or required pairings directly in the error.
 - If an error teaches a rule that should have been known before execution, add the same rule to the
   relevant `--help` page so the command is self-documenting before and after failure.
-- Keep workflow, rationale, and multi-command orchestration out of error text.
+- Limit recovery text to the immediate correction; omit unrelated workflow and rationale.
 
-Example: if `tool` rejects a dirty git worktree because untracked files `file1` and `file2` must be
-intent-to-add staged first, the recovery line should be:
+For example, a POSIX-shell recovery command for files `file 1` and `file2` is:
 
 ```bash
-git add -N file1 file2 && tool
+git add -N -- 'file 1' file2
 ```
 
 Use the framework's native parse errors for syntax it already understands, such as unknown options,
@@ -105,7 +97,7 @@ framework cannot express. Keep terminology and usage shape consistent across bot
 
 ## Implementation workflow
 
-1. Identify the parser framework, command-definition source, and help-customization hooks before
+1. Identify the parser or command-definition source and help-customization hooks before
    editing, and put each fact at the narrowest definition that owns it.
 2. Generate root and affected subcommand help from the executable and inspect the rendered output,
    including wrapping and preserved examples.
