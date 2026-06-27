@@ -15,17 +15,16 @@ Do NOT use for URLs ending in .md — those are already markdown, use WebFetch o
 
 ## Usage
 
-Run the bundled wrapper with Node. Resolve `scripts/defuddle.js` relative to this
-`SKILL.md` file:
+Run the bundled wrapper with Node:
 
 ```bash
-node <skill-directory>/scripts/defuddle.js <url>
+node scripts/defuddle.js <url>
 ```
 
 Save to file:
 
 ```bash
-node <skill-directory>/scripts/defuddle.js <url> -o content.md
+node scripts/defuddle.js <url> -o content.md
 ```
 
 The wrapper always requests Markdown with frontmatter, supplies a browser user
