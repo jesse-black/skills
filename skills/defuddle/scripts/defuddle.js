@@ -14,9 +14,7 @@ old.reddit.com rewrite for Reddit URLs.
 
 Examples:
   defuddle.js https://example.com/article
-  defuddle.js https://www.reddit.com/r/example/comments/abc123/post/ -o post.md
-
-Set DEFUDDLE_USER_AGENT to override the default user agent.`);
+  defuddle.js https://www.reddit.com/r/example/comments/abc123/post/ -o post.md`);
 }
 
 const [input, ...forwardedArgs] = process.argv.slice(2);
@@ -47,11 +45,10 @@ if (/^(?:(?:www|new|old|np)\.)?reddit\.com$/i.test(target.hostname)) {
 const hasUserAgent = forwardedArgs.some(
   (arg) => arg === '-u' || arg === '--user-agent' || arg.startsWith('--user-agent='),
 );
-const userAgent = process.env.DEFUDDLE_USER_AGENT || DEFAULT_USER_AGENT;
 const defuddleArgs = ['parse', target.toString(), '-mf'];
 
 if (!hasUserAgent) {
-  defuddleArgs.push('-u', userAgent);
+  defuddleArgs.push('-u', DEFAULT_USER_AGENT);
 }
 
 defuddleArgs.push(...forwardedArgs);
