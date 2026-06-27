@@ -108,14 +108,8 @@ framework cannot express. Keep terminology and usage shape consistent across bot
 
 ## What to keep out of CLI surfaces
 
-| Belongs in CLI surfaces | Belongs in a skill / AGENTS.md |
-|-------------------------|--------------------------------|
-| Flags, values, defaults, choices | Cross-tool or policy workflow |
-| One-line "what this flag does" | Repo policy |
-| Top-level "what this tool is for and when to use it" | Cross-tool when/why |
-| Subcommand examples; top-level recipes inside one tool | **Rationale** behind a convention |
-| Self-contained gotchas tied to a flag/value | Long narrative, orchestration, multi-tool flows |
-| Invalid-call recovery and corrected invocation shapes | Cross-tool strategy |
-
-Don't cram cross-tool workflow narrative into `--help` or error messages, and don't leave flag
-enumerations in AGENTS.md. Each surface does what it's structurally good at.
+The isolation test draws the line. Anything that only makes sense with cross-tool workflow, repo
+policy, the *rationale* behind a convention, or multi-tool orchestration in view belongs in a skill
+or AGENTS.md — not in `--help` or an error, where it can't be applied safely from the page alone.
+Conversely, don't leave flag enumerations stranded in AGENTS.md, where they rot the moment the CLI
+changes; those belong in the parser. Each surface does what it's structurally good at.
