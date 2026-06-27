@@ -2,6 +2,8 @@
 
 My collection of agent skills. Also see [execplan-skills](https://github.com/jesse-black/execplan-skills) for my [ExecPlan](https://developers.openai.com/cookbook/articles/codex_exec_plans) skills.
 
+Install with `npx skills add jesse-black/skills`.
+
 ## Available skills
 
 ### [CLI as harness](skills/cli-as-harness/)
