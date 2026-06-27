@@ -1,6 +1,6 @@
 ---
 name: cli-as-harness
-description: Author CLI surfaces as agent-facing documentation, especially `--help` and actionable error messages. Use with any language or parser design when adding or editing a CLI, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into CLI surfaces, or making errors suggest the corrected command line or tool call.
+description: Author CLI surfaces as agent-facing documentation, especially `--help` and actionable error messages. Use with any language or parser design when adding or changing a CLI interface, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into CLI surfaces, or making errors suggest the corrected command line or tool call.
 ---
 
 # Authoring CLI surfaces as harness
@@ -58,7 +58,7 @@ A flag list is the floor, not the ceiling. The high-value additions for an agent
 - **Recipes** — short task flows for top-level `tool --help`, so the agent sees the intended
   *order* for common end-to-end work inside that tool. Keep them brief and point to the exact
   subcommands; do not try to replace subcommand help.
-  > `Recipe (log then review):  tool add ... ; tool list --due`
+  > `Recipe (log then review):  tool add ... && tool list --due`
 - **Isolated guidance** — advice correct on its own, since each help page must stand without
   surrounding narrative. Good: "`--output FILE` writes to `FILE` instead of stdout."
 - **Gotchas** — constraints that produce confusing errors if missed. Put each rule next to the
