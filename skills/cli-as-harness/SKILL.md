@@ -1,6 +1,6 @@
 ---
 name: cli-as-harness
-description: Author CLI surfaces as agent-facing documentation, especially parser-generated `--help` and actionable error messages. Use when adding or editing a CLI, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into generated CLI surfaces, or making errors suggest the corrected command line or tool call.
+description: Author CLI surfaces as agent-facing documentation, especially parser-generated `--help` and actionable error messages. Use in any language or CLI parser framework when adding or editing a CLI, improving help text or validation errors, moving command reference out of AGENTS.md / CLAUDE.md / a README / a skill and into generated CLI surfaces, or making errors suggest the corrected command line or tool call.
 ---
 
 # Authoring CLI surfaces as harness
@@ -19,18 +19,39 @@ command use; a skill or AGENTS.md owns cross-tool workflow, policy, and anything
 bigger picture to apply safely.** Most staleness and duplication in agent docs comes from copying
 a flag list into AGENTS.md, where it rots the moment the CLI changes.
 
+## Start from a declarative parser framework
+
+Everything below depends on a parser that generates `--help` and structured errors from one
+declarative source of truth. A hand-rolled parser — manual `argv`/`sys.argv` walking, ad-hoc
+`if`/`else` flag handling — cannot produce these surfaces: help drifts from behavior, validation
+scatters across the code, and there is nothing for an agent to read. Hand-rolled parsers also grow
+unmanageable as flags and subcommands accumulate.
+
+- **New project:** reach for the ecosystem's standard parser framework from the first flag rather
+  than parsing `argv` by hand.
+- **Existing hand-rolled CLI:** migrating to a parser framework is usually the highest-leverage
+  change available, and a prerequisite for the rest of this skill. Move flags, defaults, choices,
+  and required-ness into declarations so help and errors generate themselves.
+
 ## Authoring `--help`
 
-If you own the CLI, put the canonical, agent-facing instruction **in the parser**. With Python
-`argparse`:
+If you own the CLI, put the canonical, agent-facing instruction **in the parser's command
+definitions**. Use the project's existing parser framework and conventions; the principle applies
+equally to Python `argparse` or Click, Rust clap, Node.js Commander, Go Cobra, and other CLI
+parsers. Map these semantic roles to the framework's own API:
 
-- top-level `description=` / `epilog=` — what the tool is for and when to reach for it.
-- `help=` on every argument — the one-line "what this flag is."
-- `choices=[...]` so valid values self-document.
-- subcommand `description=` / `epilog=` (with `formatter_class=argparse.RawDescriptionHelpFormatter`
-  so layout survives) for the richer content below.
+| Semantic role | Put in the parser or command definition |
+|---------------|-----------------------------------------|
+| Root purpose | Summary and long description explaining what the tool does and when to use it |
+| Option contract | Help text, value shape, default, allowed values, and whether it is required |
+| Subcommand contract | Command-local description, options, examples, and gotchas |
+| Extended guidance | Framework-supported footer, after-help, or equivalent verbatim section |
 
-Then instruction files carry a **pointer, not a copy**: ``Run `tool <cmd> --help` for the
+Prefer framework-generated usage, option, and default output over hand-maintained copies. Keep
+examples and longer guidance beside the command definition, or in the framework's help hooks, and
+preserve intentional line breaks with the framework's own formatter.
+
+Then make instruction files carry a **pointer, not a copy**: ``Run `tool <cmd> --help` for the
 authoritative reference.``
 
 ### What to put in `--help` (beyond the bare flags)
@@ -44,22 +65,14 @@ A flag list is the floor, not the ceiling. The high-value additions for an agent
   *order* for common end-to-end work inside that tool. Keep them brief and point to the exact
   subcommands; do not try to replace subcommand help.
   > `Recipe (log then review):  tool add ... ; tool list --due`
-- **Isolated guidance** — guidance that is correct on its own,
-  because each help page should stand without surrounding narrative. Good: "capture the snapshot
-  in the snapshot flags, not --notes"; "a pass/skip is archived, not closed."
-- **Gotchas** — the constraint that produces a confusing error if missed
-  (e.g. an enforced status↔value pairing). Put the rule next to the flag, then make the matching
-  error name the violated constraint and suggest the corrected command line or tool call.
-- **Tool when/why** — the root `tool --help` should say when to use the
-  tool at all. For example, top-level `tool --help` should briefly explain when that tool belongs
-  in the user's workflow. Put common recipes here when they describe flows across that tool's
-  own subcommands.
-
-Use this boundary:
-
-- Top-level `tool --help`: recipes for common end-to-end flows inside that tool.
-- Subcommand `tool cmd --help`: examples plus command-local gotchas.
-- Skill / AGENTS.md: workflows that cross tools, require repo policy, or need domain judgment.
+- **Isolated guidance** — advice correct on its own, since each help page must stand without
+  surrounding narrative. Good: "capture the snapshot in the snapshot flags, not --notes"; "a
+  pass/skip is archived, not closed."
+- **Gotchas** — the constraint that produces a confusing error if missed (e.g. an enforced
+  status↔value pairing). Put the rule next to the flag, then make the matching error name the
+  violated constraint and suggest the corrected command line or tool call.
+- **Tool when/why** — the root `tool --help` should say when to reach for the tool at all, and host
+  the recipes that span its own subcommands.
 
 **The isolation test** decides what qualifies: *would this instruction still be correct and
 actionable for an agent that read only this `--help` page and nothing else?* If yes, it belongs in
@@ -85,6 +98,21 @@ intent-to-add staged first, the recovery line should be:
 ```bash
 git add -N file1 file2 && tool
 ```
+
+Use the framework's native parse errors for syntax it already understands, such as unknown options,
+missing values, and invalid enumerated values. Add application errors for semantic constraints the
+framework cannot express. Keep terminology and usage shape consistent across both paths.
+
+## Implementation workflow
+
+1. Identify the parser framework, command-definition source, and help-customization hooks before
+   editing, and put each fact at the narrowest definition that owns it.
+2. Generate root and affected subcommand help from the executable and inspect the rendered output,
+   including wrapping and preserved examples.
+3. Exercise representative invalid calls; verify each error names the bad input and, when the fix is
+   unambiguous, gives a runnable correction. Cover both paths with tests in the project's style,
+   asserting durable contract text over incidental spacing.
+4. Remove duplicated command reference from instruction files, replacing it with a help pointer.
 
 ## What to keep out of CLI surfaces
 
