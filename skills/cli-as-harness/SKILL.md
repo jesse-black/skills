@@ -80,6 +80,10 @@ to recover. Keep them short, specific, and corrective:
 - When the fix is unambiguous, include a runnable correction. Render dynamic values safely for the
   target interface: shell-quote shell values, use `--` before positional filenames when supported,
   or prefer a structured tool call or argument list.
+- Only suggest a correction you can derive from the failed input. If recovery needs intent the
+  program never had, state the rule and stop. A fabricated example with invented values implies a
+  specificity the tool cannot supply and sends the agent down a wrong path. Omit the command rather
+  than guess.
 - For validation constraints, name the accepted values or required pairings directly in the error.
 - If an error teaches a rule that should have been known before execution, add the same rule to the
   relevant `--help` page so the command is self-documenting before and after failure.
